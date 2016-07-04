@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  * Weather forecast service default implementation.
@@ -18,15 +19,18 @@ import java.util.HashMap;
 @Service
 public class WeatherServiceBean implements WeatherService {
 
+    private static final String[] WEATHER = {"Clear", "Cloudy", "Rain", "Snow", "Fog", "Shower"};
+
+    private Random rnd = new Random();
+
     @Override @Log
-    public String getWeather(Date date, String location) {
-        if (date == null) date = new Date();
+    public String getWeather(String location) {
         if (location == null) try {
             location = determineCurrentLocation();
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-        return "Weather for " + date + " in " + location;
+        return WEATHER[rnd.nextInt(WEATHER.length)] + " in " + location;
     }
 
     @Log(level = Log.Level.DEBUG) @Profile

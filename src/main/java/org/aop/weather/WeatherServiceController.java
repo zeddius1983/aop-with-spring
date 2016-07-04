@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-import java.util.Date;
 
 @RestController
 public class WeatherServiceController {
@@ -18,9 +17,8 @@ public class WeatherServiceController {
 
     @Log @Profile
     @RequestMapping("/weather")
-    public String getWeather(@RequestParam(required = false) Date date,
-                             @RequestParam(required = false) String location) throws IOException {
-        return weatherService.getWeather(date, location);
+    public String getWeather(@RequestParam(required = false) String location) throws IOException {
+        return weatherService.getWeather(location);
     }
 
 }

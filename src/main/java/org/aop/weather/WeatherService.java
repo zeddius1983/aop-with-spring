@@ -1,7 +1,5 @@
 package org.aop.weather;
 
-import java.util.Date;
-
 /**
  * This service provides a weather forecast.
  *
@@ -9,6 +7,12 @@ import java.util.Date;
  */
 public interface WeatherService {
 
-    String getWeather(Date date, String location);
+    /**
+     * Gets the current weather for the given location.
+     *
+     * @param location the city.
+     * @return current weather conditions.
+     */
+    String getWeather(String location);
 
 }
