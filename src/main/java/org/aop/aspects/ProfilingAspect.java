@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
+import javax.annotation.Priority;
 import java.lang.reflect.Method;
 
 /**
@@ -19,6 +20,7 @@ import java.lang.reflect.Method;
  */
 @Aspect
 @Component
+@Priority(100)
 public class ProfilingAspect {
 
     @Pointcut("execution(* *(..)) && " + "@annotation(profile)")
