@@ -3,6 +3,7 @@
 /.idea
 /build
 /bin
+/src/main/resources/aspectj
 .classpath
 .project
 .cache

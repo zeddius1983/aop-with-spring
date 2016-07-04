@@ -1,0 +1,14 @@
+<!DOCTYPE aspectj PUBLIC "-//AspectJ//DTD//EN" "http://www.eclipse.org/aspectj/dtd/aspectj.dtd">
+<aspectj>
+
+    <weaver options="-Xreweavable -verbose -showWeaveInfo">
+        <include within="org.aop..*"/>
+    </weaver>
+
+    <aspects>
+        <aspect name="org.aop.aspects.LoggingAspect"/>
+        <aspect name="org.aop.aspects.ProfilingAspect"/>
+        <aspect name="org.aop.aspects.AspectsOrder"/>
+    </aspects>
+
+</aspectj>
