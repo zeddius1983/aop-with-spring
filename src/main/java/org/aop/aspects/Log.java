@@ -7,6 +7,8 @@ import java.lang.annotation.Target;
 
 /**
  * Use this annotation on methods that need to be logged.
+ *
+ * @author Alexander Valyugin
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)

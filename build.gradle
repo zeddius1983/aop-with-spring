@@ -24,6 +24,10 @@ repositories {
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+ext {
+    useAspectj = true
+}
+
 configurations {
     aop
 }
@@ -51,14 +55,10 @@ task copyAopLibs(type: Copy) {
     from configurations.aop
 }
 
-task createAspectJResource << {
-    configurations.aop.each { File file -> println file }
-}
-
 bootRun {
-//    '-javaagent:' + projectDir + '/aspectjweaver-1.8.8.jar',
-//    '-javaagent:' + projectDir + '/spring-instrument-4.2.5.RELEASE.jar'
-//    jvmArgs = ["-Dhttp.proxyHost=xxxxxx", "-Dhttp.proxyPort=xxxxxx"]
+    if (useAspectj) {
+        jvmArgs = configurations.aop.collect {File f -> "-javaagent:${f.getAbsolutePath()}" }
+    }
 }
 
 task wrapper(type: Wrapper) {

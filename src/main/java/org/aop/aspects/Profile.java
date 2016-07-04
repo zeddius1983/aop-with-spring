@@ -7,6 +7,8 @@ import java.lang.annotation.Target;
 
 /**
  * Use this annotation to measure method execution time.
+ *
+ * @author Alexander Valyugin
  */
 @Target({ ElementType.METHOD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
