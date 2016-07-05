@@ -33,7 +33,7 @@ public class LoggingAspect {
             log(logger, log.level(), traceLog, result);
             return result;
         } catch (Exception e) {
-            logger.error("{} -> threw {}", traceLog, e);
+            logger.error("{} -> threw {}", traceLog, e.getClass().getName());
             throw e;
         }
     }
