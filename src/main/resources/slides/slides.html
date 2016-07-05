@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>reveal.js</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/moon.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+
+    </script>
+</head>
+<body>
+
+<div class="reveal">
+    <div class="slides">
+        <section>
+            <h1>Spring AOP</h1>
+            <h3>Aspect-oriented programming with Spring</h3>
+            <small>Created by <a href="https://github.com/zeddius1983">Alexander Valyugin</a> / <a
+                    href="http://twitter.com/zeddius1983">@zeddius1983</a></small>
+        </section>
+
+        <section>
+            <h2>Table of Contents</h2>
+            <ul>
+                <li class="fragment">Why Aspect-Oriented Programming?</li>
+                <li class="fragment">Basic AOP Concepts</li>
+                <li class="fragment">Getting Started with Spring AOP</li>
+                <li class="fragment">Unleashing the Power of AspectJ</li>
+                <li class="fragment">Summary</li>
+            </ul>
+        </section>
+
+        <section data-transition="slide-in fade-out">
+            <h2>What is AOP?</h2>
+        </section>
+        <section data-transition="fade-in fade-out">
+            <p>is a programming paradigm</p>
+        </section>
+        <section data-transition="fade-in slide-out">
+            <p>aims to increase modularity by allowing the separation of cross-cutting concerns</p>
+        </section>
+
+        <section>
+            <h2>Cross-cutting Concerns</h2>
+        </section>
+
+        <section>
+            <h2>AOP Concepts</h2>
+            <ul>
+                <li><p class="fragment"><b>Aspect</b>: a modularization of a concern that cuts across multiple classes
+                </p></li>
+                <li><p class="fragment"><b>Join point</b>: a point during the execution of a program</p></li>
+                <li><p class="fragment"><b>Advice</b>: action taken by an aspect at a particular join point</p></li>
+                <li><p class="fragment"><b>Pointcut</b>: a predicate that matches join points</p></li>
+            </ul>
+        </section>
+        <section>
+            <h2>Advice Types</h2>
+        </section>
+
+        <section>
+            <h2>Spring AOP: Pros & Cons</h2>
+            <ul>
+                <li class="fragment">Pro: Non-invasive/Easy to start</li>
+                <li class="fragment">Pro: No need for a special compilation process</li>
+                <li class="fragment">Pro: Close integration between AOP implementation and Spring IoC</li>
+                <li class="fragment">Con: Proxy implementation limitations</li>
+                <li class="fragment">Con: Supports only method execution ioin points</li>
+            </ul>
+        </section>
+
+        <section>
+            <section>
+                <h3>Declaring an aspect</h3>
+                <pre><code class="java" data-trim data-noescape>
+@Aspect
+public class LoggingAspect {
+}
+                </code></pre>
+            </section>
+
+            <section>
+                <h3>Declaring a pointcut</h3>
+                <pre><code class="java" data-trim data-noescape>
+@Aspect
+public class LoggingAspect {
+    @Pointcut("execution(* *(..)) && @annotation(log)")
+    private void logAnnotatedMethod(Log log) { }
+}
+                </code></pre>
+                <pre class="fragment"><code class="java" data-trim data-noescape>
+@Target({ ElementType.METHOD, ElementType.TYPE })
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Log
+    enum Level {
+        TRACE, DEBUG, INFO, WARN, ERROR
+    }
+    Level level() default Level.INFO;
+}
+                </code></pre>
+            </section>
+            <section>
+                <h3>Declaring advice</h3>
+                <pre><code class="java" data-trim data-noescape>
+@Aspect
+public class LoggingAspect {
+    @Pointcut("execution(* *(..)) && @annotation(log)")
+    private void logAnnotatedMethod(Log log) { )
+
+    @Around("logAnnotatedMethod(log)")
+    public Object aroundInvoke(ProceedingJoinPoint pjp, Log log)
+                                throws Throwable {
+        // proceed
+    }
+}
+                </code></pre>
+            </section>
+            <section>
+                <h3>Do something useful</h3>
+                <pre><code class="java" data-trim data-noescape>
+@Around("logAnnotatedMethod(log)")
+public Object aroundInvoke(ProceedingJoinPoint pjp, Log log)
+                    throws Throwable {
+    Logger logger = LoggerFactory.getLogger(pjp.getTarget().getClass());
+    String traceLog = traceBuilder.build(pjp);
+    Object result;
+    try {
+        result = pjp.proceed();
+        log(logger, log.level(), traceLog, result);
+        return result;
+    } catch (Exception e) {
+        logger.error("{} -> threw {}", traceLog, e.getClass().getName());
+        throw e;
+    }
+}
+            </code></pre>
+            </section>
+            <section>
+                <h3>Enabling AspectJ Support</h3>
+                <pre><code class="java" data-trim data-noescape>
+@Configuration
+@EnableAspectJAutoProxy(proxyTargetClass = true)
+public class AppConfig {
+
+}
+                </code></pre>
+                <pre class="fragment"><code class="xml" data-trim data-noescape>
+&lt;aop:aspectj-autoproxy proxy-target-class="true"/&gt;
+                </code></pre>
+            </section>
+        </section>
+
+        <section>
+            <section>
+                <h3>Weather forecast service</h3>
+                <pre><code class="java" data-trim data-noescape>
+public interface WeatherService {
+    String getWeather(String location);
+}
+                </code></pre>
+                <pre class="fragment"><code class="java" data-trim data-noescape>
+@Service
+public class WeatherServiceBean implements WeatherService {
+    @Override @Log
+    public String getWeather(String location) {
+        // return the most accurate weather (ever)
+    }
+}
+                </code></pre>
+                <pre class="fragment"><code class="java" data-trim data-noescape>
+@RestController
+public class WeatherServiceController {
+    @Autowired
+    <mark>private WeatherServiceBean weatherService;</mark>
+
+    @RequestMapping("/weather")
+    public String getWeather(@RequestParam(required = false)
+                    String location) throws IOException
+        return weatherService.getWeather(location);
+    }
+}
+                </code></pre>
+            </section>
+        </section>
+
+        <section data-transition="slide-in fade-out">
+            <h2>Run to see...</h2>
+        </section>
+        <section data-transition="fade-in fade-out">
+            <h2>it doesn't work!</h2>
+        </section>
+
+        <section>
+            <h2>Understanding AOP proxies</h2>
+            <img data-src="http://docs.spring.io/spring/docs/current/spring-framework-reference/html/images/aop-proxy-plain-pojo-call.png">
+            <img class="fragment fade-up"
+                 data-src="http://docs.spring.io/spring/docs/current/spring-framework-reference/html/images/aop-proxy-call.png">
+        </section>
+        <section>
+
+    </div>
+</div>
+
+<script src="lib/js/head.min.js"></script>
+<script src="js/reveal.js"></script>
+
+<script>
+			// More info https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				history: true,
+
+				// More info https://github.com/hakimel/reveal.js#dependencies
+				dependencies: [
+					{ src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+
+
+
+</script>
+</body>
+</html>
