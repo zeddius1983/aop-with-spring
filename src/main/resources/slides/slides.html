@@ -19,7 +19,6 @@
 			link.type = 'text/css';
 			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
 			document.getElementsByTagName( 'head' )[0].appendChild( link );
-
     </script>
 </head>
 <body>
@@ -54,8 +53,17 @@
             <p>aims to increase modularity by allowing the separation of cross-cutting concerns</p>
         </section>
 
-        <section>
+        <section data-transition="slide-in fade-out">
             <h2>Cross-cutting Concerns</h2>
+            <p class="fragment">are aspects of a program that affect other concerns</p>
+        </section>
+        <section data-transition="fade-in fade-out">
+            <h3>OOP implementation</h3>
+            <img data-src="images/cross-cutting1.png" width="50%" height="50%" />
+        </section>
+        <section data-transition="fade-in fade-out">
+            <h3>AOP implementation</h3>
+            <img data-src="images/cross-cutting2.png" width="50%" height="50%" />
         </section>
 
         <section>
@@ -66,20 +74,6 @@
                 <li><p class="fragment"><b>Join point</b>: a point during the execution of a program</p></li>
                 <li><p class="fragment"><b>Advice</b>: action taken by an aspect at a particular join point</p></li>
                 <li><p class="fragment"><b>Pointcut</b>: a predicate that matches join points</p></li>
-            </ul>
-        </section>
-        <section>
-            <h2>Advice Types</h2>
-        </section>
-
-        <section>
-            <h2>Spring AOP: Pros & Cons</h2>
-            <ul>
-                <li class="fragment">Pro: Non-invasive/Easy to start</li>
-                <li class="fragment">Pro: No need for a special compilation process</li>
-                <li class="fragment">Pro: Close integration between AOP implementation and Spring IoC</li>
-                <li class="fragment">Con: Proxy implementation limitations</li>
-                <li class="fragment">Con: Supports only method execution ioin points</li>
             </ul>
         </section>
 
@@ -117,14 +111,18 @@ public @interface Log
                 <h3>Declaring advice</h3>
                 <pre><code class="java" data-trim data-noescape>
 @Aspect
+@Component
 public class LoggingAspect {
+    @Autowired // DI works out of the box
+    private TraceBuilder traceBuilder;
+
     @Pointcut("execution(* *(..)) && @annotation(log)")
     private void logAnnotatedMethod(Log log) { )
 
     @Around("logAnnotatedMethod(log)")
     public Object aroundInvoke(ProceedingJoinPoint pjp, Log log)
                                 throws Throwable {
-        // proceed
+        ...
     }
 }
                 </code></pre>
@@ -181,11 +179,11 @@ public class WeatherServiceBean implements WeatherService {
     }
 }
                 </code></pre>
-                <pre class="fragment"><code class="java" data-trim data-noescape>
+                <pre class="fragment"><code class="java" data-trim data-noescape contenteditable="true">
 @RestController
 public class WeatherServiceController {
     @Autowired
-    <mark>private WeatherServiceBean weatherService;</mark>
+    private WeatherServiceBean weatherService;
 
     @RequestMapping("/weather")
     public String getWeather(@RequestParam(required = false)
@@ -200,8 +198,19 @@ public class WeatherServiceController {
         <section data-transition="slide-in fade-out">
             <h2>Run to see...</h2>
         </section>
-        <section data-transition="fade-in fade-out">
-            <h2>it doesn't work!</h2>
+        <section>
+            <section data-transition="fade-in fade-out">
+                <h2>it doesn't work!</h2>
+            </section>
+            <section data-transition="fade-in fade-out">
+                <img data-src="images/failure1.png" />
+            </section>
+            <section data-transition="fade-in fade-out">
+                <pre><code class="bash" data-trim data-noescape>
+curl localhost:8080/weather?location=Moscow
+                </code></pre>
+                <img data-src="images/log1.png" />
+            </section>
         </section>
 
         <section>
@@ -210,7 +219,111 @@ public class WeatherServiceController {
             <img class="fragment fade-up"
                  data-src="http://docs.spring.io/spring/docs/current/spring-framework-reference/html/images/aop-proxy-call.png">
         </section>
+
         <section>
+            <h3>JDK Dynamic Proxy</h3>
+            <p>If the target object to be proxied implements at least one interface
+                then a JDK dynamic proxy will be used</p>
+            <img data-src="images/jdk-proxy.png" />
+        </section>
+        <section>
+            <h3>CGLIB Proxy</h3>
+            <p>If the target object does not implement any interfaces then a CGLIB proxy will be created</p>
+            <img data-src="images/cglib-proxy.png" />
+        </section>
+
+        <section>
+            <h2>Let's move on...</h2>
+            <pre><code class="java" data-trim data-noescape>
+@Service
+public class WeatherServiceBean implements WeatherService {
+    @Override @Log
+    public String getWeather(String location) {
+        if (location == null) try {
+            location = determineCurrentLocation();
+        }
+        ...
+    }
+
+    @Log(level = Log.Level.DEBUG)
+    public String determineCurrentLocation() throws IOException {
+        ...
+    }
+}
+            </code></pre>
+        </section>
+
+        <section data-transition="slide-in fade-out">
+            <img data-src="images/boromir2.jpg" />
+        </section>
+        <section data-transition="fade-in fade-out">
+            <h3>Boromir is right...</h3>
+            <img data-src="images/log1.png" />
+        </section>
+        <section data-transition="fade-in fade-out">
+            <h3>... yes because of the proxy mechanism!</h3>
+            <div class="fragment">
+                <p>It means that self-invocation is going to be invoked against the 'this' reference,
+                    and not the proxy.</p>
+                <p>Therefore advice is not executed.</p>
+            </div>
+        </section>
+
+        <section>
+            <h3>It's time to unleash the full power of AspectJ...</h3>
+        </section>
+        <section>
+            <h2>Load-time Weaving</h2>
+            <p class="fragment">Load-time weaving (LTW) refers to the process of weaving AspectJ aspects
+                into an application’s class files as they are being loaded into the Java virtual machine (JVM).</p>
+        </section>
+
+        <section>
+            <section>
+                <h3>Enabling Load-time Weaving</h3>
+                <p class="fragment">add JVM agents first</p>
+                <pre class="fragment"><code class="bash" data-trim data-noescape>
+-javaagent:path/to/aspectjweaver-{version}.jar
+-javaagent:path/to/org.springframework.instrument-{version}.jar
+                </code></pre>
+            </section>
+            <section>
+                <p>add META-INF/aop.xml to classpath</p>
+                <pre class="fragment"><code class="xml" data-trim>
+&lt;!DOCTYPE aspectj PUBLIC &quot;-//AspectJ//DTD//EN&quot;
+                    &quot;http://www.eclipse.org/aspectj/dtd/aspectj.dtd&quot;&gt;
+&lt;aspectj&gt;
+    &lt;weaver options=&quot;-verbose -showWeaveInfo&quot;&gt;
+        &lt;include within=&quot;org.aop..*&quot;/&gt;
+    &lt;/weaver&gt;
+
+    &lt;aspects&gt;
+        &lt;aspect name=&quot;org.aop.aspects.LoggingAspect&quot;/&gt;
+    &lt;/aspects&gt;
+&lt;/aspectj&gt;
+                </code></pre>
+            </section>
+            <section>
+                <p>and finally</p>
+                <pre class="fragment"><code class="java" data-trim data-noescape>
+@Configuration
+@EnableLoadTimeWeaving(aspectjWeaving =
+                    EnableLoadTimeWeaving.AspectJWeaving.ENABLED)
+public class AppConfig {
+
+}
+                </code></pre>
+            </section>
+        </section>
+
+        <section>
+            <p>Looks pretty simple, let's try</p>
+            <p class="fragment">Hope Boromir is not there this time...</p>
+        </section>
+        <section>
+            <p>Oh no, again!</p>
+            <img data-src="images/failure2.png" />
+        </section>
 
     </div>
 </div>
@@ -231,9 +344,6 @@ public class WeatherServiceController {
 					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
 				]
 			});
-
-
-
 </script>
 </body>
 </html>
