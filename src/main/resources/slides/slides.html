@@ -2,9 +2,16 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <title>reveal.js</title>
+    <title>Aspect Oriented Programming with Spring</title>
+
+    <meta name="description" content="Aspect Oriented Programming with Spring Presentation">
+    <meta name="author" content="Alexander Valyugin">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <link rel="stylesheet" href="css/reveal.css">
     <link rel="stylesheet" href="css/theme/moon.css">
@@ -108,6 +115,13 @@ public @interface Log
                 </code></pre>
             </section>
             <section>
+                <h3>Best Practices</h3>
+                <ul>
+                    <li class="fragment">Use @target (@within) and @annotation pointcuts wherever possible</li>
+                    <li class="fragment">Otherwise try to keep pointcuts fine grained</li>
+                </ul>
+            </section>
+            <section>
                 <h3>Declaring advice</h3>
                 <pre><code class="java" data-trim data-noescape>
 @Aspect
@@ -196,16 +210,27 @@ public class WeatherServiceController {
         </section>
 
         <section data-transition="slide-in fade-out">
-            <h2>Run to see...</h2>
+            <p>Run to see...</p>
         </section>
         <section>
-            <section data-transition="fade-in fade-out">
-                <h2>it doesn't work!</h2>
-            </section>
-            <section data-transition="fade-in fade-out">
+            <section>
+                <p>it doesn't work</p>
                 <img data-src="images/failure1.png" />
             </section>
-            <section data-transition="fade-in fade-out">
+            <section>
+                <p>Here comes the fix</p>
+                <pre><code class="java" data-trim data-noescape contenteditable="true">
+@RestController
+public class WeatherServiceController {
+    @Autowired
+    private WeatherService weatherService;
+
+    ...
+}
+                </code></pre>
+            </section>
+            <section>
+                <p>Voila</p>
                 <pre><code class="bash" data-trim data-noescape>
 curl localhost:8080/weather?location=Moscow
                 </code></pre>
@@ -257,11 +282,11 @@ public class WeatherServiceBean implements WeatherService {
             <img data-src="images/boromir2.jpg" />
         </section>
         <section data-transition="fade-in fade-out">
-            <h3>Boromir is right...</h3>
+            <p>Boromir is right...</p>
             <img data-src="images/log1.png" />
         </section>
         <section data-transition="fade-in fade-out">
-            <h3>... yes because of the proxy mechanism!</h3>
+            <p>... yes because of the proxy mechanism!</p>
             <div class="fragment">
                 <p>It means that self-invocation is going to be invoked against the 'this' reference,
                     and not the proxy.</p>
@@ -270,7 +295,7 @@ public class WeatherServiceBean implements WeatherService {
         </section>
 
         <section>
-            <h3>It's time to unleash the full power of AspectJ...</h3>
+            <p>It's time to unleash the full power of AspectJ...</p>
         </section>
         <section>
             <h2>Load-time Weaving</h2>
@@ -281,7 +306,7 @@ public class WeatherServiceBean implements WeatherService {
         <section>
             <section>
                 <h3>Enabling Load-time Weaving</h3>
-                <p class="fragment">add JVM agents first</p>
+                <p class="fragment">add JVM arguments first</p>
                 <pre class="fragment"><code class="bash" data-trim data-noescape>
 -javaagent:path/to/aspectjweaver-{version}.jar
 -javaagent:path/to/org.springframework.instrument-{version}.jar
@@ -313,17 +338,118 @@ public class AppConfig {
 
 }
                 </code></pre>
+                <pre class="fragment"><code class="xml" data-trim data-noescape>
+&lt;context:load-time-weaver aspectj-weaving=&quot;on&quot;/&gt;
+                </code></pre>
             </section>
         </section>
 
         <section>
             <p>Looks pretty simple, let's try</p>
-            <p class="fragment">Hope Boromir is not there this time...</p>
+            <p class="fragment">(hope Boromir is not there this time)</p>
+        </section>
+        <section data-transition="slide-in fade-out">
+            <p>Oh not again...</p>
+            <img data-src="images/carl.png" />
+        </section>
+        <section data-transition="fade-in fade-out">
+            <p>Seems like TraceBuilder is not injected</p>
+            <img data-src="images/failure2.png" />
+            <pre class="fragment"><code class="java" data-trim data-noescape>
+@Aspect
+@Component
+public class LoggingAspect {
+    @Autowired
+    private TraceBuilder traceBuilder;
+
+    @Around("logAnnotatedMethod(log)")
+    public Object aroundInvoke(ProceedingJoinPoint pjp, Log log)
+                throws Throwable {
+        ...
+        String traceLog = traceBuilder.build(pjp); // <- line 29
+        ...
+    }
+}
+                </code></pre>
+        </section>
+        <section data-transition="fade-in fade-out">
+            <p>Hopefully there is a fix for it...</p>
         </section>
         <section>
-            <p>Oh no, again!</p>
-            <img data-src="images/failure2.png" />
+            <section>
+                <p>by making it Spring bean again</p>
+                <pre><code class="java" data-trim data-noescape>
+@Configuration
+@EnableLoadTimeWeaving(aspectjWeaving =
+                    EnableLoadTimeWeaving.AspectJWeaving.ENABLED)
+public class AppConfig {
+    @Bean
+    public LoggingAspect loggingAspect() {
+        return Aspects.aspectOf(LoggingAspect.class);
+    }
+}
+                </code></pre>
+            </section>
+            <section data-transition="slide-in fade-out">
+                <p>Works like a charm!</p>
+                <img data-src="images/log3.png" />
+            </section>
+            <section>
+                <p>You can see the aspects weaved in due to -showWeaveInfo</p>
+                <img data-src="images/log2.png" />
+            </section>
         </section>
+
+        <section>
+            <h2>One More Thing...</h2>
+        </section>
+        <section>
+            <section>
+                <h3>@Configurable</h3>
+                <p>The support is intended to be used for objects created outside of the control of any container</p>
+                <pre class="fragment"><code class="java" data-trim data-noescape>
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Configurable
+public class GeoLocation {
+    private String city;
+
+    @Log(level = Log.Level.DEBUG)
+    public String getCity() {
+        return city;
+    }
+}
+                </code></pre>
+            </section>
+            <section>
+                <p>in WeatherServiceBean</p>
+                <pre><code class="java" data-trim data-noescape>
+@Log(level = Log.Level.DEBUG)
+private String determineCurrentLocation()
+                    throws IOException {
+    ...
+    return geoLocation.getCity();
+}
+                </code></pre>
+            </section>
+            <section>
+                <p>No surprises here :-)</p>
+                <img data-src="images/log4.png" />
+            </section>
+        </section>
+
+        <section>
+            <p>The sample project available on <a href="https://github.com/zeddius1983/aop-with-spring">github</a></p>
+            <img data-src="images/github-qr.jpg" />
+        </section>
+        <section>
+            <h2>Summary</h2>
+            <p class="fragment">One can show presentation without the cats...<p class="fragment">but not without
+                    Boromir</p>
+        </section>
+        <section>
+            <h2>Q&A Session</h2>
+        </section>
+
 
     </div>
 </div>
@@ -341,6 +467,7 @@ public class AppConfig {
 					{ src: 'plugin/markdown/marked.js' },
 					{ src: 'plugin/markdown/markdown.js' },
 					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
 					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
 				]
 			});
