@@ -96,8 +96,12 @@ public class LoggingAspect {
 
             <section>
                 <h3>Declaring a pointcut</h3>
+                <pre><code class="bash" data-trim data-noescape>
+                execution(modifiers-pattern? ret-type-pattern declaring-type-pattern?name-pattern(param-pattern)
+                    throws-pattern?)
+                </code></pre>
                 <pre><code class="java" data-trim data-noescape>
-@Aspect
+@Aspect @Component
 public class LoggingAspect {
     @Pointcut("execution(* *(..)) && @annotation(log)")
     private void logAnnotatedMethod(Log log) { }
@@ -115,11 +119,8 @@ public @interface Log
                 </code></pre>
             </section>
             <section>
-                <h3>Best Practices</h3>
-                <ul>
-                    <li class="fragment">Use @target (@within) and @annotation pointcuts wherever possible</li>
-                    <li class="fragment">Otherwise try to keep pointcuts fine grained</li>
-                </ul>
+                <h3>Best Practice</h3>
+                <p>Use method and class annotated pointcuts</p>
             </section>
             <section>
                 <h3>Declaring advice</h3>
@@ -165,7 +166,7 @@ public Object aroundInvoke(ProceedingJoinPoint pjp, Log log)
                 <h3>Enabling AspectJ Support</h3>
                 <pre><code class="java" data-trim data-noescape>
 @Configuration
-@EnableAspectJAutoProxy(proxyTargetClass = true)
+@EnableAspectJAutoProxy(proxyTargetClass = false)
 public class AppConfig {
 
 }
